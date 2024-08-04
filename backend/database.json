@@ -1,0 +1,34 @@
+{
+  "users": [
+    {
+      "email": "rohan@test.com",
+      "password": "$2b$10$T/f8IeIwmocMfnWVXPsW2.XVAHOYSiyeD1s0N7pVuctF46.dEzTci"
+    },
+    {
+      "email": "rohan@d.com",
+      "password": "$2b$10$0/fnWngYsU3aXnHsixOP4eRUVou4dJ7v1hK2uiNi82ff30JDQ0GRm"
+    },
+    {
+      "email": "rohan-1@test.com",
+      "password": "$2b$10$YuGjXfqvi3Pt5j4QaYSjNusjGCR4RpYQJHqu8VmRFm4i5Nm9oVh/a",
+      "firstName": "Rohan"
+    },
+    {
+      "email": "rohan-2@test.com",
+      "password": "$2b$10$fo3qyUYllRLCRyBjzVbAn.no1Ph0lKSVCRan3mZRb3FxhQx4uebEe",
+      "firstName": "RR"
+    },
+    {
+      "email": "rohan-3@test.com",
+      "password": "$2b$10$chBu9Mg5tL/lr32wZIZhm.jjhADfb1aPf/gkjoPigqy0NQTMbTMFa",
+      "firstName": "Rohan",
+      "lastName": "JJ"
+    },
+    {
+      "email": "rohan-4@test.com",
+      "password": "$2b$10$h4VdsJcirhQYJgP9GDQXye9f6MQHzNglc5Hmfas.f5d0OqGgDItSG",
+      "firstName": "Rohan",
+      "lastName": "J"
+    }
+  ]
+}
