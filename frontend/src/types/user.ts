@@ -22,7 +22,21 @@ export type UserSignUpRequest = {
     receiveEmails?: boolean;
 }
 
+export type UserSignUpResponse = {
+    status: boolean,
+    statusCode: string,
+    message?: string,
+    user?: User
+}
+
 export type UserSignInRequest = {
     email: string;
     password: string;
+}
+
+export type UserSignInResponse = {
+    status: boolean,
+    statusCode: string,
+    message?: string,
+    user?: User
 }

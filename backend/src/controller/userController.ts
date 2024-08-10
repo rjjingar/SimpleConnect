@@ -13,7 +13,8 @@ function convertFromDB(user: User): UserModel {
         firstName: user.firstName,
         lastName: user.lastName,
         createdAt: user.createdAt,
-        updatedAt: user.updatedAt
+        updatedAt: user.updatedAt,
+        password: user.passwordHash
     }
     return userModel;
 }
@@ -95,6 +96,17 @@ export async function createUser(user: UserModel, passwordHash: string): Promise
         const errMsg = `Error while creating user ${JSON.stringify(err)}`
         console.error(errMsg, err);
         return {status: false, msg: errMsg};
+    }
+}
+
+export async function deleteUser(email: string): Promise<{status: boolean, msg?: string}> {
+    try {
+        const res = await prismaClient.user.delete({where: {email: email}});
+        return {status: true};
+    } catch (err) {
+        const msg = `DB Error while deleting user for email ${email} : ${fetchErrorCause(err)}`;
+        console.error(msg);
+        return {status: false, msg: msg};
     }
 }
 

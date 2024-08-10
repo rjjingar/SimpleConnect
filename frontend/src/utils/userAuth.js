@@ -1,4 +1,4 @@
-import { ValidateUserToken, CheckAccountExists, CreateUserAccount, Login } from "../backendUtils/userAuthBackend";
+import { ValidateUserToken, CheckAccountExists, UserSignUp, UserLogin } from "../backendUtils/userAuthBackend";
 
 const LC_ST_USER_KEY = 'user';
 
@@ -26,11 +26,11 @@ export function AccountExists(email, callback) {
 }
 
 export function CreateAccount(userProfile, callback) {
-    CreateUserAccount(userProfile).then(result => callback(result));
+    UserSignUp(userProfile).then(result => callback(result));
 }
 
 export function LoginUser(email, password, callback) {
-    Login(email, password).then(result => {
+    UserLogin(email, password).then(result => {
         if (result.success) {
             localStorage.setItem(LC_ST_USER_KEY, JSON.stringify({email, token: result.token}))
         }

@@ -3,7 +3,8 @@ export type UserModel = {
     firstName: string,
     lastName: string,
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
+    password?: string
 }
 
 export type UpdateEmailRequest = {
@@ -30,4 +31,12 @@ export type UserAccountCreateRequest = {
 export type TokenPayload = {
     email: string,
     signInTime: number
+}
+
+export type AuthResponse = {
+    status: boolean,
+    statusCode: string,
+    token?: string,
+    message?: string,
+    user?: UserModel
 }

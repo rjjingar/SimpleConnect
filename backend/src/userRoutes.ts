@@ -11,7 +11,7 @@ userRouter.get('/test', async (req: Request, res: Response) => {
     return res.status(StatusCodes.OK).json({'status': 'success'});
 })
 
-userRouter.get('/users', validateUserToken, async (req: Request, res: Response) => {
+userRouter.get('/users', async (req: Request, res: Response) => {
     try {
         console.log('Request to fetch all users');
         const allUsers: UserModel[] = await getAllUser();
