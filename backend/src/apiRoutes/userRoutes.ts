@@ -1,8 +1,8 @@
 import express, {Request, Response} from 'express';
-import { UserModel, UpdateEmailRequest } from './types/userType';
+import { UserModel, UpdateEmailRequest } from '../types/userType';
 import {StatusCodes} from 'http-status-codes';
-import { getAllUser, getUserByEmail, updateUser, updateEmail } from './controller/userController';
-import {validateUserToken} from './middleware/userTokenAuth';
+import { getAllUser, getUserByEmail, updateUser, updateEmail } from '../controller/userController';
+import {validateUserToken} from '../middleware/userTokenAuth';
 
 export const userRouter = express.Router();
 
@@ -42,7 +42,7 @@ userRouter.get("/user/:email", validateUserToken, async (req : Request, res : Re
 userRouter.post("/user", validateUserToken, async (req: Request, res: Response) => {
     try {
         const userReq: UserModel = req.body;
-        console.log('Request to upsert user with email ' + userReq.email);
+        console.log(`Request to upsert user with email ${userReq.email} body: ${JSON.stringify(userReq)}`);
         const updatedUser = await updateUser(userReq);
         console.log(`Response for upsert user with email: ${userReq.email} ` + JSON.stringify(updatedUser));
         if (updatedUser.status) {

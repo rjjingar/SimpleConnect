@@ -10,5 +10,5 @@ if (!process.env.PORT) {
     process.exit(1);
 }
 
-export const APP_PORT = process.env.PORT;
+export const APP_PORT: number = parseInt(process.env.PORT, 10);
 export const JWT_SECRET_KEY = process.env.JWT_SCRET_KEY;

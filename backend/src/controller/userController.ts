@@ -1,47 +1,36 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { NotificationPreferences, Prisma, PrismaClient, UserProfile } from "@prisma/client";
 import { User } from '@prisma/client';
-import { UserModel } from "../types/userType";
+import { NotifPrefsModel, UserModel, UserProfileModel } from "../types/userType";
+import { fetchErrorCause, prismaClient } from './dbCommons';
+import { convertFromDB, UserFull } from "./modelConverter";
+import { upsertUserNotifs, upsertUserProfile } from "./userProfileController";
 
-const prismaClient = new PrismaClient();
-const PRISMA_ERROR_CODES = {
-    "P1000": "Authentication Error"
-}
-
-function convertFromDB(user: User): UserModel {
-    const userModel: UserModel = {
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-        password: user.passwordHash
-    }
-    return userModel;
-}
 
 /**
  * Fetches all users from DB
  * @returns Array of all users as UserModel[] or empty array if no users found. 
  */
 export async function getAllUser(): Promise<UserModel[]> { 
-    const users: User[] = await prismaClient.user.findMany();
+    const users: UserFull[] = await prismaClient.user.findMany({
+        include: {
+            userProfile: true,
+            notificationPrefs: true
+        }
+    });
     let userModels: UserModel[] = [];
     if (users && users.length > 0) {
         userModels = users.map(u => convertFromDB(u));
     }
     console.log('getAllUser ' + JSON.stringify(userModels));
     return userModels;
-
 }
 
-export async function getUserByEmail(email: string): Promise<UserModel | undefined> {
+export async function getUserByEmail(email: string, includeProfile?: boolean, includeNotifPrefs?: boolean): Promise<UserModel | undefined> {
     console.log(`DB request to find user by email ${email}`);
-    const user: User | null = await prismaClient.user.findUnique({
-            where: {email: email}
-        });
+    const dbUser: UserFull | null = await fetchDBUser(email, includeProfile || false, includeNotifPrefs || false);
     let userModel: UserModel | undefined = undefined;
-    if (user) {
-        userModel = convertFromDB(user)
+    if (dbUser) {
+        userModel = convertFromDB(dbUser)
     }
     console.log(`getUserByEmail for email ${email} : ${JSON.stringify(userModel)}`);
     return userModel;
@@ -55,19 +44,40 @@ export async function getUserPasswordHash(email: string): Promise<string | undef
     return undefined;
 }
 
-export async function updateUser(user: UserModel): Promise<{status: boolean, msg?: string}> {
+async function fetchDBUser(email: string, includeProfile: boolean | false, includeNotifs: boolean | false): Promise<UserFull | null> {
     try {
-        const date: Date = new Date();
-        const res = await prismaClient.user.update({
-            where: {email: user.email},
-            data: {
-                email: user.email,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                updatedAt: date
+        const dbUser: UserFull | null = await prismaClient.user.findUnique({
+            where: {email: email},
+            include: {
+                userProfile: includeProfile,
+                notificationPrefs: includeNotifs
             }
         });
-        console.log('updateUser result ' + JSON.stringify(res));
+        return dbUser;
+    } catch (err) {
+        const msg = `DB Error while finding user for email ${email} : ${fetchErrorCause(err)}`;
+        console.error(msg);
+        return null;
+    }
+}
+
+
+export async function updateUser(user: UserModel): Promise<{status: boolean, msg?: string}> {
+    try {
+        const dbUser: UserFull | null = await fetchDBUser(user.email, true, true);
+        let profileUpdated = false;
+        let notifsUpdated = false;
+        if (dbUser) {
+            if (user.profile) {
+                const res = await upsertUserProfile(dbUser.id, user.profile, dbUser.userProfile);
+                profileUpdated = res.status;
+            }
+            if (user.notifs) {
+                const res = await upsertUserNotifs(dbUser.id, user.notifs, dbUser.notificationPrefs);
+                notifsUpdated = res.status;
+            }
+        }
+        console.log(`updateUser result profileUpdated: ${profileUpdated} notifsUpdated: ${notifsUpdated}`);
         return {status: true};
     } catch (err) {
         const msg = `DB Error while updating user for email ${user.email} : ${fetchErrorCause(err)}`;
@@ -80,17 +90,22 @@ export async function createUser(user: UserModel, passwordHash: string): Promise
     const date = new Date();
     try {
         console.log(`DB createUser request: ${JSON.stringify(user)} | password: ${passwordHash}`);
-        const res = await prismaClient.user.create({
+        const createdUser: User = await prismaClient.user.create({
             data: {
                 email: user.email,
                 passwordHash: passwordHash,
-                firstName: user.firstName,
-                lastName: user.lastName,
                 createdAt: date,
                 updatedAt: date
             }
         });
-        console.log('createUser result ' + JSON.stringify(res));
+        console.log('createUser result ' + JSON.stringify(createdUser));
+        const userId = createdUser.id;
+        if (user.profile) {
+            const createdProfile = await upsertUserProfile(userId, user.profile, null);
+        }
+        if (user.notifs) {
+            const createdNotifs = await upsertUserNotifs(userId, user.notifs, null);
+        }
         return {status: true, msg: ''};
     } catch (err) {
         const errMsg = `Error while creating user ${JSON.stringify(err)}`
@@ -101,7 +116,15 @@ export async function createUser(user: UserModel, passwordHash: string): Promise
 
 export async function deleteUser(email: string): Promise<{status: boolean, msg?: string}> {
     try {
-        const res = await prismaClient.user.delete({where: {email: email}});
+        const dbUser = await fetchDBUser(email, false, false);
+        if (dbUser) {
+            const userId = dbUser.id;
+            console.log(`DB User found for email ${email} with userId ${userId}`);
+            await prismaClient.userProfile.deleteMany({where: {userId: userId}});
+            await prismaClient.notificationPreferences.deleteMany({where: {userId: userId}});
+            await prismaClient.user.delete({where: {id: userId}});
+        }
+        
         return {status: true};
     } catch (err) {
         const msg = `DB Error while deleting user for email ${email} : ${fetchErrorCause(err)}`;
@@ -141,23 +164,3 @@ export async function updateEmail(oldEmail: string, newEmail: string) {
     console.log('updateEmail result ' + JSON.stringify(res));
 }
 
-// TODO : Add error handling
-function handleError(err: any) {
-    if (err instanceof Prisma.PrismaClientKnownRequestError) {
-        const errorCode = err.code;
-        PRISMA_ERROR_CODES
-
-    }
-}
-function fetchErrorCause(err: any): string {
-    let cause = '';
-    if (err instanceof Prisma.PrismaClientKnownRequestError) {
-        if (err.meta && err.meta.cause) {
-            cause = err.meta?.cause as string;
-        }
-    }
-    if (!cause) {
-        cause = JSON.stringify(err);
-    }
-    return cause;
-}

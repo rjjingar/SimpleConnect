@@ -12,11 +12,41 @@ datasource db {
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  passwordHash String
-  firstName  String
-  lastName   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
+  id                    Int     @id @default(autoincrement())
+  email                 String  @unique
+  passwordHash          String
+  userProfile           UserProfile?
+  notificationPrefs     NotificationPreferences?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @default(now())
+}
+
+model UserProfile {
+  id                Int       @id @default(autoincrement())
+  userId            Int?      @unique
+  user              User?     @relation(fields: [userId], references: [id])
+  firstName         String
+  lastName          String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now())
+}
+
+model NotificationPreferences {
+  id                Int       @id @default(autoincrement())
+  userId            Int?      @unique
+  user              User?     @relation(fields: [userId], references: [id])
+  
+  newsletter        Boolean
+  transactional     Boolean
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now())
+}
+
+
+model PlatformIntegrationTypes {
+  id                String    @id 
+  name              String
+  description       String
+  appSecrets        String?
+  appData           String?
 }

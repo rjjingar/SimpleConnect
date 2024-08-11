@@ -2,19 +2,13 @@ import * as dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import { userRouter } from "./userRoutes";
-import { authRouter } from "./authRoutes";
-
-dotenv.config();
-
-/** App Variables */
-if (!process.env.PORT) {
-    process.exit(1);
- }
+import { userRouter } from "./apiRoutes/userRoutes";
+import { authRouter } from "./apiRoutes/authRoutes";
+import { APP_PORT } from "./appVariables";
  
- const PORT: number = parseInt(process.env.PORT as string, 10);
+const PORT: number = APP_PORT;
  
- const app = express();
+const app = express();
 
 /** App Configuration */
 

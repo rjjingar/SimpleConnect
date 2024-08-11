@@ -1,10 +1,24 @@
 export type UserModel = {
     email: string,
+    profile?: UserProfileModel,
+    notifs?: NotifPrefsModel,
+    createdAt?: Date,
+    updatedAt?: Date,
+    password?: string
+}
+
+export type UserProfileModel = {
     firstName: string,
     lastName: string,
     createdAt?: Date,
     updatedAt?: Date,
-    password?: string
+}
+
+export type NotifPrefsModel = {
+    newsletter: boolean,
+    transactional: boolean,
+    createdAt?: Date,
+    updatedAt?: Date,
 }
 
 export type UpdateEmailRequest = {
@@ -24,7 +38,7 @@ export type UserAuthRequest = {
 }
 
 export type UserAccountCreateRequest = {
-    userProfile: UserModel,
+    user: UserModel,
     password: string
 }
 

@@ -1,11 +1,11 @@
 import express, {Request, Response} from 'express';
-import { UserModel, UserAuthRequest, UserAccountCreateRequest, AuthResponse } from './types/userType';
+import { UserModel, UserAuthRequest, UserAccountCreateRequest, AuthResponse } from '../types/userType';
 import {StatusCodes} from 'http-status-codes';
 
-import * as userController from './controller/userController';
+import * as userController from '../controller/userController';
 import * as bcrypt from 'bcrypt';
-import { createToken, validateTokenFromHeader } from './middleware/userTokenAuth';
-import * as responseCodes from './types/apiResponseCodes';
+import { createToken, validateTokenFromHeader } from '../middleware/userTokenAuth';
+import * as responseCodes from '../types/apiResponseCodes';
 
 export const authRouter = express.Router(); 
 
@@ -94,7 +94,7 @@ authRouter.post('/create-account', async (req: Request, res: Response) => {
             return res.status(StatusCodes.BAD_REQUEST).json(respBody);
         }
         
-        const email: string = createReq.userProfile.email;
+        const email: string = createReq.user.email;
         const existingUser: UserModel | undefined = await userController.getUserByEmail(email);
         if (existingUser) {
             const errMsg = `Another user with same email already exists for ${email}`;
@@ -105,7 +105,7 @@ authRouter.post('/create-account', async (req: Request, res: Response) => {
         const password: string = createReq.password;
 
         bcrypt.hash(password, 10, async function (_err, hash) {
-            const created = await userController.createUser(createReq.userProfile, hash);
+            const created = await userController.createUser(createReq.user, hash);
             if (created && created.status) {
                 const token = createToken(email);
                 respBody.token = token;
@@ -145,11 +145,11 @@ function updateWithFailure(authResp: AuthResponse, statusCode: string, message: 
 }
 
 function validateCreateAccountRequest(req: UserAccountCreateRequest): {valid: boolean, msg: string} {
-    if (!req || !req.userProfile || !req.password) {
+    if (!req || !req.user || !req.password) {
         return {valid: false, msg: 'request not in correct format'};
     }
-    const profile = req.userProfile;
-    if (!profile.email || !profile.firstName || !profile.lastName) {
+    const user = req.user;
+    if (!user.email || !user.profile?.firstName || !user.profile?.lastName) {
         return {valid: false, msg: 'Required fields missing'};
     }
     return {valid: true, msg: ''};
